@@ -4,22 +4,23 @@ DROP TABLE IF EXISTS drivers;
 -- table for storing uber drivers
 CREATE TABLE drivers (
 	driver_id INT NOT NULL,
-	driver_license VARCHAR(32),
-	driver_name VARCHAR(100),
+	driver_license VARCHAR(12), -- state license numbers are 12 characters or fewer, and may contain both alpha and numeric chars
+	driver_fname VARCHAR(50),
+	driver_lname VARCHAR(50),
 	driver_address VARCHAR(50),
-	driver_phone VARCAR(10),
-	driver_photo
+	driver_phone VARCHAR(10), -- no hyphens; 10 digit phone number w/area code
+	driver_photo VARBINARY, -- recommended for images below 256kb
 	PRIMARY KEY (driver_id)
 );
 
 DROP TABLE IF EXISTS cars;
 -- table for storing uber drivers' cars
 CREATE TABLE cars (
-	car_plate VARCHAR(12)
+	car_plate VARCHAR(12) -- covers various state requirements, as well as both alphanumeric possibilities
 	driver_id INT,
-	car_make
-	car_model			**********
-	car_year
+	car_make VARCHAR(12),
+	car_model VARCHAR(12),
+	car_year INT,
 	PRIMARY KEY (car_plate),
 	FOREIGN KEY (driver_id) REFERENCES drivers(driver_id) ON DELETE CASCADE
 );
@@ -27,9 +28,9 @@ CREATE TABLE cars (
 DROP TABLE IF EXISTS payment_accounts;
 -- table for storing uber drivers' payment account info
 CREATE TABLE payment_accounts (
-	bank_account_number INT NOT NULL,
-	bank_routing_number VARCHAR(9),
-	driver_ssn VARCHAR(9),
+	bank_account_number VARCHAR(32), -- may start with 0; leave room for different bank standards
+	bank_routing_number VARCHAR(9), -- no hyphens; may start with 0
+	driver_ssn VARCHAR(9), -- no hyphens; may start with 0
 	driver_id INT,
 	PRIMARY KEY (bank_account_number),
 	FOREIGN KEY (driver_id) REFERENCES drivers(driver_id) ON DELETE CASCADE
@@ -42,7 +43,7 @@ CREATE TABLE payments (
 	time DATETIME,
 	payment_amount DECIMAL,
 	payment_tip DECIMAL,
-	payment_status ENUM
+	payment_status ENUM ('PENDING', 'PROCESSED', 'ERROR'),
 	PRIMARY KEY (payment_id)
 );
 
@@ -62,7 +63,7 @@ DROP TABLE IF EXISTS driver_ratings;
 CREATE TABLE driver_ratings (
 	driver_id INT,
 	time DATETIME,
-	driver_rate FLOAT,
+	driver_rate DECIMAL,
 	driver_comments TEXT,
 	PRIMARY KEY (time),
 	FOREIGN KEY (driver_id) REFERENCES drivers(driver_id)
@@ -81,10 +82,12 @@ DROP TABLE IF EXISTS trips;
 -- table for holding trip information
 CREATE TABLE trips (
 	trip_id INT NOT NULL,
-	date DATETIME,
-	trip_distance FLOAT,
-	pickup_location VARCHAR(32),
-	dropoff_location VARCHAR(32),
+	time DATETIME,
+	trip_distance DECIMAL,
+	pickup_location_lat DECIMAL, -- store locations as lat/long; app-connected with GPS
+	pickup_location_long DECIMAL,
+	dropoff_location_lat DECIMAL,
+	dropoff_location_long DECIMAL,
 	trip_price DECIMAL,
 	PRIMARY KEY (trip_id)
 );
@@ -104,10 +107,11 @@ DROP TABLE IF EXISTS customers;
 -- table for holding info about customers
 CREATE TABLE customers (
 	customer_id INT NOT NULL,
-	customer_name VARCHAR(100),
+	customer_fname VARCHAR(50),
+	customer_lname VARCHAR(50),
 	customer_address VARCHAR(50),
 	customer_phone VARCHAR(10),
-	customer_photo
+	customer_photo VARBINARY,
 	PRIMARY KEY (customer_id)
 );
 
@@ -115,9 +119,9 @@ DROP TABLE IF EXISTS credit_cards;
 -- table for holding customer payment (credit card) information
 CREATE TABLE credit_cards (
 	customer_id INT,
-	card_number VARCHAR(12),
-	card_expiration VARCHAR(5),
-	card_ccv VARCHAR(3),
+	card_number VARCHAR(12), -- 12digit card numbers; leading 0s allowed
+	card_expiration VARCHAR(5), -- mm/yy format
+	card_ccv VARCHAR(3), -- 3digit ccv, leading 0s allowed
 	PRIMARY KEY (card_number),
 	FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
 );
@@ -127,7 +131,7 @@ DROP TABLE IF EXISTS customer_ratings;
 CREATE TABLE customer_ratings (
 	customer_id INT,
 	time DATETIME,
-	customer_rate FLOAT,
+	customer_rate DECIMAL,
 	customer_comments TEXT,
 	PRIMARY KEY (time),
 	FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
