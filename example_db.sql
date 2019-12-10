@@ -1,5 +1,8 @@
 USE db_cskeers;
 
+-- Need to turn off foreign key checks, or change the order or table drops/creations.
+SET FOREIGN_KEY_CHECKS = 0;
+
 DROP TABLE IF EXISTS drivers;
 -- table for storing uber drivers
 CREATE TABLE drivers (
@@ -9,14 +12,14 @@ CREATE TABLE drivers (
 	driver_lname VARCHAR(50),
 	driver_address VARCHAR(50),
 	driver_phone VARCHAR(10), -- no hyphens; 10 digit phone number w/area code
-	driver_photo VARBINARY, -- recommended for images below 256kb
+	-- driver_photo VARBINARY, -- recommended for images below 256kb
 	PRIMARY KEY (driver_id)
 );
 
 DROP TABLE IF EXISTS cars;
 -- table for storing uber drivers' cars
 CREATE TABLE cars (
-	car_plate VARCHAR(12) -- covers various state requirements, as well as both alphanumeric possibilities
+	car_plate VARCHAR(12) NOT NULL, -- covers various state requirements, as well as both alphanumeric possibilities
 	driver_id INT,
 	car_make VARCHAR(12),
 	car_model VARCHAR(12),
@@ -56,7 +59,7 @@ CREATE TABLE driver_customer_payments (
 	FOREIGN KEY (payment_id) REFERENCES payments(payment_id),
 	FOREIGN KEY (driver_id) REFERENCES drivers(driver_id),
 	FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
-)
+);
 
 DROP TABLE IF EXISTS driver_ratings;
 -- table for storing driver ratings info
@@ -111,7 +114,7 @@ CREATE TABLE customers (
 	customer_lname VARCHAR(50),
 	customer_address VARCHAR(50),
 	customer_phone VARCHAR(10),
-	customer_photo VARBINARY,
+	-- customer_photo VARBINARY,
 	PRIMARY KEY (customer_id)
 );
 
@@ -157,5 +160,6 @@ CREATE TABLE reports (
 	FOREIGN KEY (trip_id) REFERENCES trips(trip_id)
 );
 
-
+-- Turn foreign key checks back on after tables have been created.
+SET FOREIGN_KEY_CHECKS = 1;
 -- and add some simple data down here
