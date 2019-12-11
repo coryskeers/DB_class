@@ -1,5 +1,5 @@
-USE db_group3_uber;
-
+USE db_cskeers;
+SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS drivers;
 -- drivers
@@ -22,15 +22,15 @@ create table cars (
 	PRIMARY KEY (plate_number, driver_id)
 );
 
-DROP TABLE IF EXISTS payment_account;
+DROP TABLE IF EXISTS payment_accounts;
 --  payment account
-create table payment_account (
+create table payment_accounts (
 	bank_account_number INT,
 	routing_number INT,
 	ssn INT,
 	driver_id INT,
 	PRIMARY KEY (bank_account_number),
-	FOREIGN KEY (driver_id) REFERENCES drivers(driver_id) ON DELETE CASCADE,
+	FOREIGN KEY (driver_id) REFERENCES drivers(driver_id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS payments;
@@ -52,21 +52,22 @@ create table driver_customer_payments (
 	payment_id INT,
 	driver_id INT,
 	customer_id INT,
-	PRIMARY KEY (payment_id)
+	PRIMARY KEY (payment_id),
 	FOREIGN KEY (driver_id) REFERENCES drivers(driver_id) ON DELETE CASCADE,
 	FOREIGN KEY (payment_id) REFERENCES payments(payment_id) ON DELETE CASCADE,
-	FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
+	FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS driver_rating;
+DROP TABLE IF EXISTS driver_ratings;
 --  driver rating
-create table driver_rating (
+create table driver_ratings (
 	driver_id INT,
 	rating_date DATE,
 	rating_time TIME,
 	rate FLOAT,
 	rating_comments TEXT,
-	PRIMARY KEY (driver_id, rating_date, rating_time),
+	PRIMARY KEY (rating_date, rating_time),
+	FOREIGN KEY (driver_id) REFERENCES drivers(driver_id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS regions;
@@ -75,7 +76,7 @@ create table regions (
 	region_zipcode INT,
 	region_state VARCHAR(32),
 	region_city VARCHAR(32),
-	PRIMARY KEY (region_zipcode, region_state, region_city),
+	PRIMARY KEY (region_zipcode, region_state, region_city)
 );
 
 DROP TABLE IF EXISTS trips;
@@ -88,19 +89,19 @@ create table trips (
 	pickup_location VARCHAR(128),
 	dropoff_location VARCHAR(128),
 	payment_id INT,
-	PRIMARY KEY (trip_id, trip_date, trip_time),
+	PRIMARY KEY (trip_id, trip_date, trip_time)
 );
 
-DROP TABLE IF EXISTS driver_customer_trip;
+DROP TABLE IF EXISTS driver_customer_trips;
 --  driver_customer_trip
-create table driver_customer_trip (
+create table driver_customer_trips (
 	trip_id INT,
 	customer_id INT,
 	driver_id INT,
 	PRIMARY KEY (trip_id),
 	FOREIGN KEY (driver_id) REFERENCES drivers(driver_id) ON DELETE CASCADE,
 	FOREIGN KEY (trip_id) REFERENCES trips(trip_id) ON DELETE CASCADE,
-	FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
+	FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS customers;
@@ -110,7 +111,7 @@ create table customers (
 	customer_name VARCHAR(32),
 	customer_address VARCHAR(128),
 	customer_phone INT,
-	PRIMARY KEY (customer_id),
+	PRIMARY KEY (customer_id)
 );
 
 DROP TABLE IF EXISTS credit_cards;
@@ -120,18 +121,19 @@ create table credit_cards (
 	card_number INT,
 	card_expiration VARCHAR(32),
 	card_code INT,
-	PRIMARY KEY (customer_id, card_number),
+	PRIMARY KEY (card_number),
+	FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS customer_rating;
+DROP TABLE IF EXISTS customer_ratings;
 --  customer rating
-create table customer_rating (
+create table customer_ratings (
 	customer_id INT,
 	cr_date DATE,
 	cr_time TIME,
 	cr_rate FLOAT,
 	cr_description TEXT,
-	PRIMARY KEY (customer_id, cr_date, cr_time),
+	PRIMARY KEY (customer_id, cr_date, cr_time)
 );
 
 DROP TABLE IF EXISTS accidents;
@@ -141,7 +143,7 @@ create table accidents (
 	accident_date DATE,
 	accident_time TIME,
 	accident_description TEXT,
-	PRIMARY KEY (accident_id, accident_date, accident_time),
+	PRIMARY KEY (accident_id, accident_date, accident_time)
 );
 
 DROP TABLE IF EXISTS reports;
@@ -152,59 +154,59 @@ create table reports (
 	report_date DATE,
 	report_time TIME,
 	report_description TEXT,
-	PRIMARY KEY (report_id),
+	PRIMARY KEY (report_id)
 );
 
 
 
 -- next, add some simple sample data
 INSERT INTO reports (report_id, trip_id, report_date, report_time, report_description) VALUES
-(783, 440, 2019-09-21, 13:43:41, "Something happened"),
-(784, 441, 2019-09-22, 13:43:42, "Something else happened");
+(783, 440, '2019-09-21', '13:43:41', "Something happened"),
+(784, 441, '2019-09-22', '13:43:42', "Something else happened");
 
 INSERT INTO accidents (accident_id, accident_date, accident_time, accident_description) VALUES
-(253, 2019-09-01, 06:43:41, "Something accidentally happened"),
-(254, 2019-09-02, 07:43:41, "Something else accidentally happened");
+(253, '2019-09-01', '06:43:41', "Something accidentally happened"),
+(254, '2019-09-02', '07:43:41', "Something else accidentally happened");
 
-INSERT INTO customer_rating (customer_id, cr_date, cr_time, cr_rate, cr_description) VALUES
-(345, 2019-10-02, 07:45:41, 4.5, "twas good"),
-(346, 2019-11-02, 07:45:41, 1.2, "twas bad");
+INSERT INTO customer_ratings (customer_id, cr_date, cr_time, cr_rate, cr_description) VALUES
+(345, '2019-10-02', '07:45:41', 4.5, "twas good"),
+(346, '2019-11-02', '07:45:41', 1.2, "twas bad");
 
 INSERT INTO credit_cards (customer_id, card_number, card_expiration, card_code) VALUES
-(345, 876458720, "9/21", 540),(346, 3827509472, "3/34", 984);
+(345, 876458720, "9/21", 540),(346, 382750947, "3/34", 984);
 
 INSERT INTO customers (customer_id, customer_name, customer_address, customer_phone) VALUES
 (345, "Mickey Mouse", "1283 N Disney Lane", 74365208),
 (346, "Minnie Mouse", "829 S Disney Lane", 98423750);
 
-INSERT INTO driver_customer_trip (trip_id, customer_id, driver_id) VALUES
+INSERT INTO driver_customer_trips (trip_id, customer_id, driver_id) VALUES
 (440,345,1234567),(441,346,1234568);
 
 INSERT INTO trips (trip_id, trip_date, trip_time, trip_distance, pickup_location, dropoff_location, payment_id) VALUES
-(839, 2019-11-02, 07:45:41, 93.2, "address here","other address here", 120),
-(840, 2019-12-02, 07:49:41, 93.2, "address 3 here","other other address here", 121);
+(839, '2019-11-02', '07:45:41', 93.2, "address here","other address here", 120),
+(840, '2019-12-02', '07:49:41', 93.2, "address 3 here","other other address here", 121);
 
 INSERT INTO regions (region_zipcode, region_state, region_city) VALUES
 (23989, "ia", "iowa city"),(23875, "wi", "madison");
 
-INSERT INTO driver_rating (driver_id, rating_date, rating_time, rate, rating_comments) VALUES
-(930, 2019-11-02, 07:45:41, 3, "twas ok"),
-(931, 2019-11-03, 07:45:49, 3.5, "twas fine");
+INSERT INTO driver_ratings (driver_id, rating_date, rating_time, rate, rating_comments) VALUES
+(930, '2019-11-02', '07:45:41', 3, "twas ok"),
+(931, '2019-11-03', '07:45:49', 3.5, "twas fine");
 
 INSERT INTO driver_customer_payments (payment_id, driver_id, customer_id) VALUES
 (293, 1234567, 345),(843, 888, 346), (333, 1234568 ,345);
 
---drivers
+-- drivers
 INSERT INTO drivers (driver_id, driver_license, driver_name, driver_address, driver_phone)
-VALUES (1234567, 'Spider Man', '1234 Superhero Lane', '123-321-1234');
+VALUES (1234567, 123, 'Spider Man', '1234 Superhero Lane', '123-321-1234');
 
 INSERT INTO drivers (driver_id, driver_license, driver_name, driver_address, driver_phone)
-VALUES (1234568, 'Ant Man', '1235 Superhero Lane', '123-123-1234');
+VALUES (1234568, 234, 'Ant Man', '1235 Superhero Lane', '123-123-1234');
 
 INSERT INTO drivers (driver_id, driver_license, driver_name, driver_address, driver_phone)
-VALUES (1234569, 'Bird Man', '1244 Superhero Lane', '123-321-8888');
+VALUES (1234569, 345, 'Bird Man', '1244 Superhero Lane', '123-321-8888');
 
---cars
+-- cars
 INSERT INTO cars (plate_number, driver_id, make, car_year )
 VALUES ('1234567', 1234567, 'Batcar', 2015);
 
@@ -215,17 +217,17 @@ INSERT INTO cars (plate_number, driver_id, make, car_year )
 VALUES ('0000000', 1234569, 'Batcar', 2001);
 
 
---payment_account
-INSERT INTO payment_account (bank_account_number INT, routing_number INT, ssn INT, driver_id INT)
-VALUES (001, 101, 591034, 1234567);
+-- payment_account
+INSERT INTO payment_accounts (bank_account_number, routing_number, ssn, driver_id)
+VALUES (1, 101, 591034, 1234567);
 
-INSERT INTO payment_account (bank_account_number INT, routing_number INT, ssn INT, driver_id INT)
-VALUES (002, 101, 427111, 1234568);
+INSERT INTO payment_accounts (bank_account_number, routing_number, ssn, driver_id)
+VALUES (2, 101, 427111, 1234568);
 
-INSERT INTO payment_account (bank_account_number INT, routing_number INT, ssn INT, driver_id INT)
-VALUES (003, 101, 814111, 1234569);
+INSERT INTO payment_accounts (bank_account_number, routing_number, ssn, driver_id)
+VALUES (3, 101, 814111, 1234569);
 
---payments
+-- payments
 INSERT INTO payments (payment_id, payment_date, payment_time, payment_amount, payment_tip, payment_tax, payment_status)
 VALUES (293, '2008-11-11', '09:30:00', 5.03, 1.25, 0.75, 1);
 
@@ -234,3 +236,5 @@ VALUES (843, '2019-11-11', '13:30:00', 15, 4.25, 0.85, 1);
 
 INSERT INTO payments (payment_id, payment_date, payment_time, payment_amount, payment_tip, payment_tax, payment_status)
 VALUES (333, '2019-04-04', '13:30:00', 40.80, 8.20, 4.25, 2);
+
+SET FOREIGN_KEY_CHECKS = 1;
