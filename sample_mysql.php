@@ -3,7 +3,7 @@ echo("<html><head><title>Sample PHP Script</title></head>\n");
 
 $hostname = 'dbdev.cs.uiowa.edu';
 $username = 'cskeers';
-$password = '';
+$password = 'DerOL5qhDx960ZM';
 $db_name = 'db_cskeers';
 
 //  hostname, username, password
@@ -63,31 +63,23 @@ if (! @mysql_select_db($db_name) ) {
 $sql_queries = array();
 $sql_queries[] = "SELECT customer_name, AVG(trip_distance), AVG(payment_amount), AVG(payment_tip / payment_amount) AS avg_tip_percent
 	FROM 
-		(SELECT customer_id FROM driver_customer_trips
-			HAVING COUNT(customer_id) > (SELECT MAX(COUNT(customer_id)) * 0.75 FROM driver_customer_trips)) dct
+		driver_customer_trips dct
+		INNER JOIN trips t
+		ON t.trip_id = dct.trip_id
 		INNER JOIN customers c
 		ON c.customer_id = dct.customer_id
 		INNER JOIN driver_customer_payments dcp
 		ON c.customer_id = dcp.customer_id
 		INNER JOIN payments p
-		ON dcp.payment_id = p.payment_id;";
-$sql_queries[] = "SELECT AVG(a.payment_tip) AS ratings_above_3, avg(b.payment_tip) AS ratings_below_3
-	FROM (SELECT avg(payment_tip)
-		FROM driver_rating dr
-		HAVING dr.rate > 3.0
+		ON dcp.payment_id = p.payment_id";
+$sql_queries[] = "SELECT AVG(payment_tip)
+	FROM driver_rating dr
 		GROUP BY dr.driver_id
+		HAVING AVG(dr.rate) > 3.0
 	INNER JOIN driver_customer_payments dcp
 		ON dr.driver_id = dcp.driver_id
 	INNER JOIN payments p
-		ON p.payment_id = dcp.payment_id) a,
-		(SELECT avg(payment_tip)
-		FROM driver_rating dr
-		HAVING dr.rate > 3.0
-		GROUP BY dr.driver_id
-	INNER JOIN driver_customer_payments dcp
-		ON dr.driver_id = dcp.driver_id
-	INNER JOIN payments p
-		ON p.payment_id = dcp.payment_id) b;";
+		ON p.payment_id = dcp.payment_id";
 $sql_queries[] = "SELECT driver_name, SUM(payment_amount) as total_payments
 	FROM drivers d INNER JOIN driver_customer_payments dcp
 	ON d.driver_id = dcp.driver_id INNER JOIN payments p
@@ -97,7 +89,7 @@ $sql_queries[] = "SELECT driver_name, SUM(payment_amount) as total_payments
 FROM drivers, payments, driver_customer_payments
 ON driver_id
 ORDER BY SUM(payment_amount) DESC
-LIMIT 1;";
+LIMIT 1";
 $headings = array();
 $headings[] = array('Customer Name','Avg. Trip Distance','Avg. Payment','Avg. Tip %');
 $headings[] = array('Avg. Tip Received');
@@ -119,7 +111,6 @@ foreach ($sql_queries as $sql_query) {
      }
      // echo("<table><tr><th>Name</th><th>Salary</th><th>dno</th></tr>\n");
      echo("</tr>\n");
-     
      while ( $row = mysql_fetch_array($result_set) ) {
      /*
           echo("<tr><td>" . $row["ename"] . "</td>\n" .
@@ -129,7 +120,7 @@ foreach ($sql_queries as $sql_query) {
      */
           echo("<tr>");
           foreach ($row as $item) {
-               echo("<td>" . $item . "</td>\n") 
+               echo("<td>" . $item . "</td>\n");
           }
           echo("</tr>\n");
      }
