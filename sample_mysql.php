@@ -28,68 +28,24 @@ if (! @mysql_select_db($db_name) ) {
  * 
  * Query 3: Which driver made the most money in the last three months, and how much was that?
  * 
- * SELECT c.customer_name, AVG(t.trip_distance), 
- * AVG(p.payment_amount), AVG(p.payment_tip / p.payment_amount)
- * FROM customers c
- * JOIN driver_customer_trips dct
- * ON c.customer_id = dct.customer_id
- * JOIN trips t
- * ON dct.trip_id = t.trip_id
- * JOIN driver_customer_payments dcp
- * ON c.customer_id = dcp.customer_id
- * JOIN payments p
- * ON p.payment_id = dcp.payment_id
- * GROUP BY c.customer_name;
- * 
- * select avg(a.payment_tip), avg(b.payment_tip) from 
- * (SELECT avg(payment_tip)
- * FROM driver_customer_payments, payments, driver_rating
- * ON driver_id
- * WHERE avg(driver_rating.rate) > 3.0)
- * ) a,
- * (SELECT avg(payment_tip)
- * FROM driver_customer_payments, payments, driver_rating
- * ON driver_id
- * WHERE avg(driver_rating.rate) <= 3.0)
- * ) b;
- * 
- * SELECT driver_name, SUM(payment_amount)
- * FROM drivers, payments, driver_customer_payments
- * ON driver_id
- * ORDER BY SUM(payment_amount) DESC
- * LIMIT 1;
- *  
  **/
 $sql_queries = array();
 $sql_queries[] = "SELECT customer_name, AVG(trip_distance), AVG(payment_amount), AVG(payment_tip / payment_amount) AS avg_tip_percent
-	FROM 
-		driver_customer_trips dct
-		INNER JOIN trips t
-		ON t.trip_id = dct.trip_id
-		INNER JOIN customers c
-		ON c.customer_id = dct.customer_id
-		INNER JOIN driver_customer_payments dcp
-		ON c.customer_id = dcp.customer_id
-		INNER JOIN payments p
-		ON dcp.payment_id = p.payment_id";
-$sql_queries[] = "SELECT AVG(payment_tip)
-	FROM driver_rating dr
-		GROUP BY dr.driver_id
-		HAVING AVG(dr.rate) > 3.0
-	INNER JOIN driver_customer_payments dcp
-		ON dr.driver_id = dcp.driver_id
-	INNER JOIN payments p
-		ON p.payment_id = dcp.payment_id";
+	FROM driver_customer_trips dct, trips t, customers c, driver_customer_payments dcp, payments p";
+$sql_queries[] = "SELECT rate, payment_tip
+	FROM driver_ratings dr
+	JOIN driver_customer_payments dcp
+	ON dr.driver_id = dcp.driver_id
+	JOIN payments p
+	ON p.payment_id = dcp.payment_id";
 $sql_queries[] = "SELECT driver_name, SUM(payment_amount) as total_payments
-	FROM drivers d INNER JOIN driver_customer_payments dcp
-	ON d.driver_id = dcp.driver_id INNER JOIN payments p
+	FROM drivers d
+	INNER JOIN driver_customer_payments dcp
+	ON d.driver_id = dcp.driver_id
+	INNER JOIN payments p
 	ON dcp.payment_id = p.payment_id
 	ORDER BY total_payments DESC
-	LIMIT 1;
-FROM drivers, payments, driver_customer_payments
-ON driver_id
-ORDER BY SUM(payment_amount) DESC
-LIMIT 1";
+	LIMIT 1";
 $headings = array();
 $headings[] = array('Customer Name','Avg. Trip Distance','Avg. Payment','Avg. Tip %');
 $headings[] = array('Avg. Tip Received');
@@ -107,8 +63,9 @@ foreach ($sql_queries as $sql_query) {
      echo("<h2>" . $sql_query . "</h2>");
      echo("<table><tr>");
      foreach ($headings[$iter++] as $heading) {
-          echo("<th>" . $heading . "</th");
+          echo("<th>" . $heading . "</th>");
      }
+     echo("</tr>");
      // echo("<table><tr><th>Name</th><th>Salary</th><th>dno</th></tr>\n");
      echo("</tr>\n");
      while ( $row = mysql_fetch_array($result_set) ) {
@@ -119,8 +76,8 @@ foreach ($sql_queries as $sql_query) {
           "</tr>\n");
      */
           echo("<tr>");
-          foreach ($row as $item) {
-               echo("<td>" . $item . "</td>\n");
+          for ($i = 0; $i < count($row); $i++) {
+               echo("<td>" . $row[$i] . "</td>\n");
           }
           echo("</tr>\n");
      }
