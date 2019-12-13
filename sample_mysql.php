@@ -22,22 +22,25 @@ if (! @mysql_select_db($db_name) ) {
 /**
  * Create 3 queries to use with our DB.
  * class example: $sql_query="SELECT ename, salary, dno FROM Emp";
- * Query 1: Who are our top 50% most active customers, and what is there average trip distance, trip price, and tip amount?
+ * Query 1: For repeat customers, what is there average trip distance, trip price, and tip amount?
  * 
  * Query 2: Do drivers who maintain an average rating above a 3.0 receive greater average tips than those drivers with below a 3.0 average?
  * 
- * Query 3: Which driver made the most money in the last three months, and how much was that?
+ * Query 3: Which driver made the most money in the last three months, and how much was that? (sample data doesn't have enough of a timespan for the 3month part of this)
  * 
  **/
 $sql_queries = array();
 $sql_queries[] = "SELECT customer_name, AVG(trip_distance), AVG(payment_amount), AVG(payment_tip / payment_amount) AS avg_tip_percent
-	FROM driver_customer_trips dct, trips t, customers c, driver_customer_payments dcp, payments p";
-$sql_queries[] = "SELECT rate, payment_tip
-	FROM driver_ratings dr
-	JOIN driver_customer_payments dcp
-	ON dr.driver_id = dcp.driver_id
-	JOIN payments p
-	ON p.payment_id = dcp.payment_id";
+	FROM driver_customer_trips dct, trips t, customers c, driver_customer_payments dcp, payments p
+	GROUP BY c.customer_id
+	HAVING COUNT(dct.customer_id) > 1";
+$sql_queries[] = "SELECT  AVG(rate) AS avg_driver_rating_above_3, AVG(payment_tip) AS avg_tip_above_3
+	FROM driver_ratings, driver_customer_payments, payments
+	HAVING AVG(rate) > 3.0
+	UNION
+	SELECT AVG(rate) AS avg_driver_rating_below_3, AVG(payment_tip) AS avg_tip_below_3
+	FROM driver_ratings, driver_customer_payments, payments
+	HAVING AVG(rate) <= 3.0";
 $sql_queries[] = "SELECT driver_name, SUM(payment_amount) as total_payments
 	FROM drivers d
 	INNER JOIN driver_customer_payments dcp
@@ -48,7 +51,7 @@ $sql_queries[] = "SELECT driver_name, SUM(payment_amount) as total_payments
 	LIMIT 1";
 $headings = array();
 $headings[] = array('Customer Name','Avg. Trip Distance','Avg. Payment','Avg. Tip %');
-$headings[] = array('Avg. Tip Received');
+$headings[] = array('Avg. Rating','Avg. Tip Received');
 $headings[] = array('Driver Name','Total Payments Received');
 
 $iter = 0;
